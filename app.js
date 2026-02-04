@@ -19,69 +19,63 @@ const CONFIG = {
 };
 
 const appState = {
-    currentPage: 'home',
     pills: [],
     config: { geminiApiKey: null, ttsSpeed: 1.0 },
 };
 
-// --- GEMINI CLIENT POTENZIATO ---
-const GeminiClient = {
-    async generateContent(category, apiKey) {
-        const catInfo = CONFIG.categories[category];
-        
-        const systemPrompt = `Sei un accademico esperto. Genera una pillola di ALTO LIVELLO per la categoria ${catInfo.title}.
-        REQUISITI:
-        - Tono: Accademico, profondo, analitico. Evita banalità.
-        - Contenuto: Cita correnti di pensiero, dati storici precisi o teorie specifiche.
-        - Struttura JSON: {"pills": [{"title": "...", "content": "...", "tags": ["...", "..."]}]}`;
-
-        const prompt = `Genera un'analisi approfondita su un tema di nicchia o avanzato di: ${catInfo.title}.`;
-
-        try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: systemPrompt + "\n\n" + prompt }] }]
-                })
-            });
-
-            const data = await response.json();
-            const text = data.candidates[0].content.parts[0].text;
-            const jsonMatch = text.match(/\{[\s\S]*\}/);
-            const parsed = JSON.parse(jsonMatch[0]);
-
-            return parsed.pills.map(p => ({
-                id: `pill-${Date.now()}-${Math.random()}`,
-                ...p,
-                category,
-                createdAt: Date.now(),
-                duration: Math.ceil(p.content.length / 5),
-                excerpt: p.content.substring(0, 100) + '...'
-            }));
-        } catch (e) {
-            console.error("Errore Gemini:", e);
-            return [];
-        }
-    }
-};
-
-// --- LOGICA UI ---
 const UI = {
+    init() {
+        const storedPills = localStorage.getItem(CONFIG.storageKeys.pills);
+        const storedConfig = localStorage.getItem(CONFIG.storageKeys.config);
+        if (storedPills) appState.pills = JSON.parse(storedPills);
+        if (storedConfig) appState.config = JSON.parse(storedConfig);
+        
+        this.render();
+        
+        document.getElementById('saveGeminiKey')?.addEventListener('click', () => {
+            const key = document.getElementById('geminiApiKey').value;
+            appState.config.geminiApiKey = key;
+            localStorage.setItem(CONFIG.storageKeys.config, JSON.stringify(appState.config));
+            alert("Chiave Salvata! Ora puoi generare contenuti.");
+        });
+        
+        document.getElementById('refreshBtn')?.addEventListener('click', () => this.refreshPills());
+    },
+
     async refreshPills() {
         const apiKey = appState.config.geminiApiKey;
-        if (!apiKey) return alert("Inserisci la API Key nelle Impostazioni!");
+        if (!apiKey) return alert("Vai in Impostazioni e inserisci la tua API Key!");
         
         const btn = document.getElementById('refreshBtn');
-        btn.textContent = '⏳ Ricerca Accademica...';
+        btn.textContent = '⏳ Analisi in corso...';
         
         try {
             for (let cat in CONFIG.categories) {
-                const newPills = await GeminiClient.generateContent(cat, apiKey);
+                const prompt = `Agisci come un docente universitario. Genera una pillola accademica in JSON per la categoria ${CONFIG.categories[cat].title}. Struttura: {"pills": [{"title": "...", "content": "...", "tags": ["tag1"]}]}`;
+                
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+
+                const data = await response.json();
+                const text = data.candidates[0].content.parts[0].text;
+                const jsonMatch = text.match(/\{[\s\S]*\}/);
+                const parsed = JSON.parse(jsonMatch[0]);
+
+                const newPills = parsed.pills.map(p => ({
+                    ...p,
+                    id: Date.now() + Math.random(),
+                    category: cat,
+                    excerpt: p.content.substring(0, 100) + '...'
+                }));
                 appState.pills.push(...newPills);
             }
             localStorage.setItem(CONFIG.storageKeys.pills, JSON.stringify(appState.pills));
             this.render();
+        } catch (e) {
+            alert("Errore con Gemini. Controlla la tua API Key.");
         } finally {
             btn.textContent = '🔄 Aggiorna Conoscenza';
         }
@@ -96,47 +90,29 @@ const UI = {
             const count = appState.pills.filter(p => p.category === key).length;
             const card = document.createElement('div');
             card.className = 'category-card';
-            card.style.borderLeft = `5px solid ${cat.color}`;
             card.innerHTML = `
-                <div class="category-header"><span>${cat.icon}</span> <span>${count}</span></div>
+                <div style="font-size: 2rem">${cat.icon}</div>
                 <h3>${cat.title}</h3>
                 <p>${cat.description}</p>
-                <button onclick="UI.navigateTo('archive')">Esplora</button>
+                <div style="margin-top: 10px; font-weight: bold; color: ${cat.color}">${count} pillole archiviate</div>
             `;
             grid.appendChild(card);
         });
     },
 
-    // Funzioni di navigazione e gestione (semplificate per brevità)
-    init() {
-        appState.pills = JSON.parse(localStorage.getItem(CONFIG.storageKeys.pills)) || [];
-        appState.config = JSON.parse(localStorage.getItem(CONFIG.storageKeys.config)) || appState.config;
-        this.render();
-        
-        // Listener per il salvataggio chiave
-        document.getElementById('saveGeminiKey')?.addEventListener('click', () => {
-            const key = document.getElementById('geminiApiKey').value;
-            appState.config.geminiApiKey = key;
-            localStorage.setItem(CONFIG.storageKeys.config, JSON.stringify(appState.config));
-            alert("Chiave Salvata!");
-        });
-        
-        document.getElementById('refreshBtn')?.addEventListener('click', () => this.refreshPills());
-    },
-
-    navigateTo(page) {
+    navigateTo(pageId) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(`${page}Page`).classList.add('active');
-        if(page === 'archive') this.renderArchive();
+        document.getElementById(pageId + 'Page').classList.add('active');
+        if(pageId === 'archive') this.renderArchive();
     },
 
     renderArchive() {
         const list = document.querySelector('.pills-list');
         list.innerHTML = appState.pills.map(p => `
-            <div class="pill-card" onclick="UI.showPillDetail(${JSON.stringify(p).replace(/"/g, '&quot;')})">
-                <h4>${p.title}</h4>
-                <p>${p.excerpt}</p>
-                <small>${CONFIG.categories[p.category].title}</small>
+            <div class="pill-card" style="background: #1a1a1a; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid ${CONFIG.categories[p.category].color}">
+                <h4 style="margin:0">${p.title}</h4>
+                <p style="font-size: 0.9rem; color: #ccc">${p.content}</p>
+                <small style="color: #888">${CONFIG.categories[p.category].title}</small>
             </div>
         `).join('');
     }
