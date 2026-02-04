@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omnia - Il tuo universo di conoscenza</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app" class="app">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="navbar-content">
+                <h1 class="navbar-title">Omnia</h1>
+                <div class="navbar-buttons">
+                    <button id="navHome" class="nav-btn active" data-page="home">
+                        🏠 Home
+                    </button>
+                    <button id="navGalaxy" class="nav-btn" data-page="galaxy">
+                        🌌 Galassia
+                    </button>
+                    <button id="navArchive" class="nav-btn" data-page="archive">
+                        📚 Archivio
+                    </button>
+                    <button id="navSettings" class="nav-btn" data-page="settings">
+                        ⚙️ Impostazioni
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Home Page -->
+            <div id="homePage" class="page active">
+                <div class="container">
+                    <div class="header">
+                        <h2>Omnia</h2>
+                        <p class="subtitle">Il tuo universo di conoscenza</p>
+                        <button id="refreshBtn" class="refresh-btn">🔄 Aggiorna</button>
+                    </div>
+
+                    <div class="categories-grid">
+                        <!-- Category Cards will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Galaxy Page -->
+            <div id="galaxyPage" class="page">
+                <div class="container">
+                    <h2>Mappa della Conoscenza</h2>
+                    <p class="subtitle">Visualizza le connessioni tra le tue pillole</p>
+                    <div class="galaxy-container">
+                        <canvas id="galaxyCanvas"></canvas>
+                        <div class="galaxy-legend">
+                            <div class="legend-item">
+                                <span class="legend-color" style="background-color: #4A90E2;"></span>
+                                <span>Umanità</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background-color: #2ECC71;"></span>
+                                <span>Società</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background-color: #E67E22;"></span>
+                                <span>Mondo</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Archive Page -->
+            <div id="archivePage" class="page">
+                <div class="container">
+                    <h2>Archivio</h2>
+                    <div class="archive-stats">
+                        <!-- Stats will be inserted here -->
+                    </div>
+                    <div class="pills-list">
+                        <!-- Pills will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div id="settingsPage" class="page">
+                <div class="container">
+                    <h2>Impostazioni</h2>
+                    
+                    <!-- Gemini API Key Section -->
+                    <div class="settings-section">
+                        <h3>🤖 Gemini AI</h3>
+                        <div class="settings-content">
+                            <div id="geminiStatus" class="status-display">
+                                <p>Stato API Key: <strong id="apiKeyStatus">⚠️ Non configurata</strong></p>
+                            </div>
+                            <button id="toggleGeminiInput" class="btn btn-primary">
+                                ➕ Aggiungi API Key
+                            </button>
+                            <div id="geminiInputContainer" class="input-container" style="display: none;">
+                                <label for="geminiApiKey">API Key di Gemini:</label>
+                                <input 
+                                    type="password" 
+                                    id="geminiApiKey" 
+                                    placeholder="AIzaSy..." 
+                                    class="input-field"
+                                >
+                                <div class="input-buttons">
+                                    <button id="saveGeminiKey" class="btn btn-success">Salva</button>
+                                    <button id="cancelGeminiKey" class="btn btn-secondary">Annulla</button>
+                                </div>
+                            </div>
+                            <button id="removeGeminiKey" class="btn btn-danger" style="display: none;">
+                                ❌ Rimuovi API Key
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Audio Settings -->
+                    <div class="settings-section">
+                        <h3>🔊 Audio</h3>
+                        <div class="settings-content">
+                            <label for="ttsSpeed">Velocità TTS:</label>
+                            <div class="speed-buttons">
+                                <button class="speed-btn" data-speed="0.5">0.5x</button>
+                                <button class="speed-btn" data-speed="0.75">0.75x</button>
+                                <button class="speed-btn active" data-speed="1.0">1.0x</button>
+                                <button class="speed-btn" data-speed="1.25">1.25x</button>
+                                <button class="speed-btn" data-speed="1.5">1.5x</button>
+                                <button class="speed-btn" data-speed="2.0">2.0x</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Theme Settings -->
+                    <div class="settings-section">
+                        <h3>🎨 Tema</h3>
+                        <div class="settings-content">
+                            <label>
+                                <input type="checkbox" id="darkModeToggle" checked>
+                                Dark Mode
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Data Management -->
+                    <div class="settings-section">
+                        <h3>💾 Dati</h3>
+                        <div class="settings-content">
+                            <button id="exportBtn" class="btn btn-secondary">Esporta archivio</button>
+                            <button id="clearAllBtn" class="btn btn-danger">Cancella tutto</button>
+                        </div>
+                    </div>
+
+                    <!-- Info -->
+                    <div class="settings-section">
+                        <h3>ℹ️ Info</h3>
+                        <div class="settings-content">
+                            <p>Versione: <strong>2.0.0</strong></p>
+                            <p>Omnia © 2026 - Universo di conoscenza</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pill Detail Modal -->
+            <div id="pillModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <button class="modal-close">&times;</button>
+                    <div id="pillDetail" class="pill-detail">
+                        <!-- Pill content will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
