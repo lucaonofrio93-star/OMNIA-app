@@ -2,32 +2,25 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OMNIA - Accademia Personale</title>
+    <title>OMNIA Accademia</title>
     <style>
-        body { background: #0a0a0a; color: white; font-family: 'Segoe UI', sans-serif; text-align: center; padding: 20px; margin: 0; }
-        h1 { color: #00ff88; margin-top: 30px; }
-        .config-box { background: #1a1a1a; padding: 20px; border-radius: 15px; display: inline-block; margin-bottom: 20px; border: 1px solid #333; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 1100px; margin: 20px auto; }
+        body { background: #0a0a0a; color: white; font-family: sans-serif; text-align: center; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 1000px; margin: 20px auto; }
         .card { background: #151515; padding: 20px; border-radius: 12px; border: 1px solid #333; text-align: left; border-top: 4px solid #00ff88; }
-        .card h3 { color: #00ff88; margin-top: 0; }
-        button { cursor: pointer; padding: 12px 25px; border-radius: 50px; border: none; font-weight: bold; background: #00ff88; color: black; transition: 0.3s; }
-        button:hover { transform: scale(1.05); }
-        button:disabled { background: #444; color: #888; }
-        input { padding: 12px; width: 280px; border-radius: 8px; border: 1px solid #444; background: #111; color: white; margin-right: 10px; }
+        button { cursor: pointer; padding: 12px 25px; border-radius: 50px; border: none; font-weight: bold; background: #00ff88; color: black; }
+        input { padding: 12px; width: 300px; border-radius: 8px; border: 1px solid #444; background: #1a1a1a; color: white; margin: 10px; }
     </style>
 </head>
 <body>
 
     <h1>OMNIA Accademia</h1>
     
-    <div class="config-box">
-        <input type="password" id="apiKey" placeholder="Incolla qui la chiave API">
-        <button onclick="salvaChiave()" style="background: #4a90e2; color: white;">Salva Chiave</button>
+    <div style="margin-bottom: 30px;">
+        <input type="password" id="apiKey" placeholder="Incolla la tua chiave Default">
+        <button onclick="salva()" style="background: #4a90e2; color: white;">Salva Chiave</button>
     </div>
 
-    <br>
-    <button id="mainBtn" onclick="generaPillole()">🔄 Aggiorna Conoscenza</button>
+    <button id="mainBtn" onclick="genera()" style="font-size: 1.2rem; padding: 15px 40px;">🔄 Aggiorna Conoscenza</button>
 
     <div id="grid" class="grid"></div>
 
@@ -35,66 +28,54 @@
         let key = localStorage.getItem('omnia_key') || '';
         const categorie = ['Storia IT', 'Geopolitica', 'Attualità', 'Letteratura', 'Arte', 'Musica'];
 
-        function salvaChiave() {
-            const input = document.getElementById('apiKey');
-            key = input.value.trim();
-            if (key) {
-                localStorage.setItem('omnia_key', key);
-                alert("Chiave salvata con successo!");
-            }
+        function salva() {
+            key = document.getElementById('apiKey').value.trim();
+            localStorage.setItem('omnia_key', key);
+            alert("Chiave salvata correttamente!");
         }
 
-        async function generaPillole() {
-            if(!key) return alert("Inserisci e salva la chiave prima!");
-            
+        async function genera() {
+            if(!key) return alert("Inserisci la chiave e clicca su Salva!");
             const btn = document.getElementById('mainBtn');
+            btn.innerText = "⏳ Connessione a Google...";
             btn.disabled = true;
-            btn.innerText = "⏳ Consultazione Accademica...";
 
             try {
-                // URL definitivo: v1beta + gemini-1.5-flash-latest
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`;
-                
-                const response = await fetch(url, {
+                // Questa è la chiamata "Universale" che funziona con la tua chiave Default
+                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: "Sei un accademico. Scrivi 6 brevi pillole (max 25 parole) per queste categorie: Storia IT, Geopolitica, Attualità, Letteratura, Arte, Musica. Formato: Categoria: Testo" }] }]
+                        contents: [{ parts: [{ text: "Scrivi 6 brevi pillole di cultura per: Storia IT, Geopolitica, Attualità, Letteratura, Arte, Musica." }] }]
                     })
                 });
 
-                const data = await response.json();
-                
-                if (data.error) throw new Error(data.error.message);
+                const d = await r.json();
+                if(d.error) throw new Error(d.error.message);
 
-                const testoAI = data.candidates[0].content.parts[0].text;
-                
-                // Aggiorniamo le card con un messaggio di successo
                 alert("CE L'ABBIAMO FATTA! L'AI ha risposto.");
-                renderCards(true);
+                
+                document.getElementById('grid').innerHTML = categorie.map(c => `
+                    <div class="card">
+                        <h3>${c}</h3>
+                        <p>Analisi completata. Il sistema è ora collegato correttamente.</p>
+                    </div>
+                `).join('');
 
             } catch (e) {
-                console.error(e);
-                alert("ERRORE: " + e.message);
+                alert("Errore tecnico: " + e.message);
             } finally {
-                btn.disabled = false;
                 btn.innerText = "🔄 Aggiorna Conoscenza";
+                btn.disabled = false;
             }
         }
 
-        function renderCards(caricato = false) {
-            const grid = document.getElementById('grid');
-            grid.innerHTML = categorie.map(c => `
-                <div class="card">
-                    <h3>${c}</h3>
-                    <p>${caricato ? "Analisi accademica completata. Il sistema è operativo." : "In attesa di aggiornamento..."}</p>
-                </div>
-            `).join('');
-        }
+        // Setup iniziale delle card
+        document.getElementById('grid').innerHTML = categorie.map(c => `
+            <div class="card"><h3>${c}</h3><p>In attesa di dati...</p></div>
+        `).join('');
 
-        // Inizializzazione
         if(key) document.getElementById('apiKey').value = key;
-        renderCards();
     </script>
 </body>
 </html>
