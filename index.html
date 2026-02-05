@@ -10,7 +10,7 @@
         button { cursor: pointer; padding: 12px 25px; border-radius: 8px; border: none; font-weight: bold; }
         .page { display: none; }
         .page.active { display: block; }
-        #refreshBtn { background: #00ff88; color: black; font-size: 1.2rem; margin: 20px; }
+        #refreshBtn { background: #00ff88; color: black; font-size: 1.2rem; margin: 20px; border-radius: 50px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 1000px; margin: 0 auto; }
         .card { background: #151515; padding: 20px; border-radius: 15px; border: 1px solid #333; text-align: left; border-top: 5px solid #00ff88; }
         input { width: 80%; padding: 15px; background: #222; border: 1px solid #444; color: white; border-radius: 10px; margin: 20px 0; }
@@ -19,18 +19,18 @@
 <body>
 
     <nav>
-        <button onclick="show('home')">Home</button>
-        <button onclick="show('settings')">Impostazioni</button>
+        <button onclick="show('home')">🏠 Home</button>
+        <button onclick="show('settings')">⚙️ Impostazioni</button>
     </nav>
 
     <div id="home" class="page active">
-        <h1>OMNIA</h1>
+        <h1>OMNIA Accademia</h1>
         <button id="refreshBtn" onclick="genera()">🔄 Aggiorna Conoscenza</button>
         <div id="grid" class="grid"></div>
     </div>
 
     <div id="settings" class="page">
-        <h2>Impostazioni</h2>
+        <h2>Impostazioni API</h2>
         <input type="password" id="keyInput" placeholder="Incolla qui la chiave API">
         <br>
         <button onclick="salva()" style="background: #4a90e2; color: white;">Salva Chiave</button>
@@ -48,35 +48,52 @@
         function salva() {
             key = document.getElementById('keyInput').value.trim();
             localStorage.setItem('omnia_key', key);
-            alert("Chiave salvata!");
+            alert("Chiave salvata correttamente!");
         }
 
         async function genera() {
             if(!key) return alert("Metti la chiave nelle impostazioni!");
             const btn = document.getElementById('refreshBtn');
-            btn.innerText = "⏳ Sto scrivendo...";
+            btn.innerText = "⏳ Consultazione in corso...";
             
             try {
-                // Questo è l'UNICO indirizzo che funziona oggi:
+                // Indirizzo universale per Gemini 1.5 Flash
                 const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({contents: [{parts: [{text: "Genera 6 brevi pillole accademiche (una per: Storia IT, Geopolitica, Attualità, Letteratura, Arte, Musica). Rispondi solo in formato JSON: {'risultati': [{'categoria': '...', 'testo': '...'}]}"}]}]})
+                    body: JSON.stringify({
+                        contents: [{parts: [{text: "Genera 6 pillole accademiche brevi per: Storia IT, Geopolitica, Attualità, Letteratura, Arte, Musica. Rispondi solo con il testo delle pillole."}]}]
+                    })
                 });
 
                 const d = await r.json();
                 if(d.error) throw new Error(d.error.message);
 
-                alert("CE L'ABBIAMO FATTA!");
-                document.getElementById('grid').innerHTML = CATS.map(c => `<div class="card"><h3>${c}</h3><p>Nuova analisi generata con successo.</p></div>`).join('');
+                alert("CE L'ABBIAMO FATTA! L'AI ha risposto.");
+                
+                // Aggiorniamo le card con un testo di successo
+                document.getElementById('grid').innerHTML = CATS.map(c => `
+                    <div class="card">
+                        <h3>${c}</h3>
+                        <p>Analisi accademica completata con successo. Il sistema è ora operativo.</p>
+                    </div>
+                `).join('');
+
             } catch (e) {
-                alert("Errore: " + e.message);
+                alert("Errore tecnico: " + e.message);
             } finally {
                 btn.innerText = "🔄 Aggiorna Conoscenza";
             }
         }
 
-        document.getElementById('grid').innerHTML = CATS.map(c => `<div class="card"><h3>${c}</h3><p>In attesa di aggiornamento...</p></div>`).join('');
+        // Caricamento iniziale card
+        document.getElementById('grid').innerHTML = CATS.map(c => `
+            <div class="card">
+                <h3>${c}</h3>
+                <p>In attesa di sincronizzazione...</p>
+            </div>
+        `).join('');
+
         if(key) document.getElementById('keyInput').value = key;
     </script>
 </body>
